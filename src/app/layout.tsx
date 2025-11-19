@@ -19,6 +19,9 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
   // !STARTERCONF this is the default favicon, you can generate your own from https://realfavicongenerator.net/
   // ! copy to /favicon folder
+   other: {
+    "google-adsense-account": "ca-pub-4404931884927196",
+  },
   icons: {
     icon: '/logo.ico',
     shortcut: '/favicon/favicon-16x16.png',
