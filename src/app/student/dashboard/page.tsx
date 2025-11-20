@@ -1,19 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
-import type { GatePass } from '@/types';
-import Link from 'next/link';
 import { 
-  PlusIcon, 
-  QrCodeIcon, 
-  CalendarIcon, 
-  ClockIcon,
+  CalendarIcon,
   CheckCircleIcon,
-  XCircleIcon,
-  EyeIcon
+  ClockIcon,
+  EyeIcon,
+  PlusIcon,
+  QrCodeIcon,
+  XCircleIcon 
 } from '@heroicons/react/24/outline';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useCallback, useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import type { GatePass } from '@/types';
 
 interface User {
   id: string;
@@ -38,68 +38,71 @@ export default function StudentDashboard() {
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const router = useRouter();
 
-  useEffect(() => {
-  checkUserAndFetchData();
-}, []);
-
-const checkUserAndFetchData = async () => {
-  try {
-    // 1️⃣ Check if user is authenticated
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      router.replace('/login');   // FIXED: replace() prevents weird back button issues
-      return;
-    }
-
-    setUser(user as User);
-
-    // 2️⃣ Fetch user profile
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError || !profileData) {
-      router.replace('/login');   // FIXED: redirect immediately
-      return;
-    }
-
-    setProfile(profileData);
-
-    // 3️⃣ Role check
-    if (profileData.role !== 'student') {
-      router.replace('/login');   // FIXED
-      return;
-    }
-
-    // 4️⃣ Fetch gate passes
-    await fetchGatePasses(profileData.student_id || user.id);
-
-  } catch (error: any) {
-    console.error('Error in checkUserAndFetchData:', error.message);
-    router.replace('/login');   // FIXED
-  }
-};
-
-
-  const fetchGatePasses = async (studentId: string) => {
+  const fetchGatePasses = useCallback(async (studentId: string) => {
     try {
       const { data, error } = await supabase
         .from('gatepasses')
         .select('*')
-        .eq('student_id', studentId) // Only fetch passes for current student
+        .eq('student_id', studentId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       setGatePasses(data || []);
-    } catch (error: any) {
-      console.error('Error fetching gate passes:', error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      // eslint-disable-next-line no-console
+      console.error('Error fetching gate passes:', errorMessage);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const checkUserAndFetchData = useCallback(async () => {
+    try {
+      // 1️⃣ Check if user is authenticated
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        router.replace('/login');
+        return;
+      }
+
+      setUser(user as User);
+
+      // 2️⃣ Fetch user profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError || !profileData) {
+        router.replace('/login');
+        return;
+      }
+
+      setProfile(profileData);
+
+      // 3️⃣ Role check
+      if (profileData.role !== 'student') {
+        router.replace('/login');
+        return;
+      }
+
+      // 4️⃣ Fetch gate passes
+      await fetchGatePasses(profileData.student_id || user.id);
+
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      // eslint-disable-next-line no-console
+      console.error('Error in checkUserAndFetchData:', errorMessage);
+      router.replace('/login');
+    }
+  }, [router, fetchGatePasses]);
+
+  useEffect(() => {
+    checkUserAndFetchData();
+  }, [checkUserAndFetchData]);
 
   const filteredPasses = gatePasses.filter(pass => 
     filter === 'all' || pass.status === filter
@@ -138,7 +141,6 @@ const checkUserAndFetchData = async () => {
   const getUserName = () => {
     if (!user) return 'Student';
     
-    // Try different possible name fields
     return user.user_metadata?.full_name || 
            user.user_metadata?.name || 
            user.email?.split('@')[0] || 

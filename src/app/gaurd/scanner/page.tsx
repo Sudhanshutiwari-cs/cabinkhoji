@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { BrowserQRCodeReader } from '@zxing/browser';
 import { supabase } from '@/lib/supabase';
 
@@ -19,6 +20,9 @@ interface QRData {
 }
 
 export default function GuardScanner() {
+  const router = useRouter();
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState('');
@@ -32,8 +36,51 @@ export default function GuardScanner() {
 
   const SCAN_COOLDOWN = 2000;
 
+  // Check user role and authentication
   useEffect(() => {
-    startCamera();
+    checkUserRole();
+  }, []);
+
+  const checkUserRole = async () => {
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        router.push('/login');
+        return;
+      }
+
+      // Get user profile with role
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profileError || !profile) {
+        console.error('Profile not found:', profileError);
+        router.push('/login');
+        return;
+      }
+
+      if (profile.role !== 'guard') {
+        console.warn('Unauthorized access attempt by role:', profile.role);
+        router.push('/login');
+        return;
+      }
+
+      setUserRole(profile.role);
+      setLoading(false);
+      
+      // Start camera only after role verification
+      startCamera();
+    } catch (err) {
+      console.error('Error checking user role:', err);
+      router.push('/login');
+    }
+  };
+
+  useEffect(() => {
     return () => {
       stopCamera();
     };
@@ -225,6 +272,26 @@ export default function GuardScanner() {
     setError('');
     startCamera();
   };
+
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg animate-pulse">
+            <span className="text-2xl text-white">🔒</span>
+          </div>
+          <h1 className="text-xl font-semibold text-gray-700">Verifying access...</h1>
+          <p className="text-gray-500 mt-2">Checking permissions</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render anything if user is not guard (will redirect)
+  if (userRole !== 'guard') {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
