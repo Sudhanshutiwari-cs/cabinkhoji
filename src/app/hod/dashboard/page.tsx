@@ -40,6 +40,12 @@ interface GatePassWithStudent extends GatePass {
   hod_id: string;
 }
 
+interface SupabaseError {
+  message: string;
+  details?: string;
+  hint?: string;
+}
+
 export default function HODRequests() {
   const router = useRouter();
   const [gatePasses, setGatePasses] = useState<GatePassWithStudent[]>([]);
@@ -62,18 +68,16 @@ export default function HODRequests() {
     }
   }, [userRole, userId, filter]);
 
-  const checkUserRoleAndDepartment = async () => {
+  const checkUserRoleAndDepartment = async (): Promise<void> => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setUnauthorized(true);
         setDebugInfo('No user found in authentication');
-        // Redirect to login immediately
         router.push('/login');
         return;
       }
 
-      console.log('Current user ID:', user.id);
       setUserId(user.id);
 
       const { data: profile, error } = await supabase
@@ -83,20 +87,15 @@ export default function HODRequests() {
         .single();
 
       if (error) {
-        console.error('Error fetching profile:', error);
         setDebugInfo(`Profile error: ${error.message}`);
         setUnauthorized(true);
         router.push('/login');
         return;
       }
 
-      console.log('User profile:', profile);
-
       if (!profile || profile.role !== 'hod') {
-        console.log('Unauthorized: User is not HOD');
         setDebugInfo(`User role is: ${profile?.role}, expected: hod`);
         setUnauthorized(true);
-        // Redirect non-HOD users to dashboard instead of login
         router.push('/login');
         return;
       }
@@ -106,19 +105,16 @@ export default function HODRequests() {
       setDebugInfo(`Authenticated as HOD: ${profile.name}, Department: ${profile.department}`);
       
     } catch (error) {
-      console.error('Error checking user role:', error);
-      setDebugInfo(`Error: ${error}`);
+      setDebugInfo(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setUnauthorized(true);
       router.push('/login');
     }
   };
 
-  const fetchGatePasses = async () => {
+  const fetchGatePasses = async (): Promise<void> => {
     try {
       setLoading(true);
-      console.log('Fetching gate passes for HOD ID:', userId);
 
-      // Fetch gate passes assigned to this HOD using hod_id column
       let query = supabase
         .from('gatepasses')
         .select(`
@@ -132,7 +128,6 @@ export default function HODRequests() {
         .eq('hod_id', userId)
         .order('created_at', { ascending: false });
 
-      // Apply status filter
       if (filter !== 'all') {
         query = query.eq('status', filter);
       }
@@ -140,31 +135,27 @@ export default function HODRequests() {
       const { data, error } = await query;
 
       if (error) {
-        console.error('Supabase query error:', error);
         setDebugInfo(prev => prev + ` | Query error: ${error.message}`);
         throw error;
       }
 
-      console.log('Fetched gate passes for HOD:', data);
       setGatePasses(data || []);
       setDebugInfo(prev => prev + ` | Found ${data?.length} passes for HOD`);
       
-    } catch (error: any) {
-      console.error('Error fetching gate passes:', error.message);
-      if (error.details) {
-        console.error('Error details:', error.details);
-        setDebugInfo(prev => prev + ` | Details: ${error.details}`);
+    } catch (error: unknown) {
+      const err = error as SupabaseError;
+      if (err.details) {
+        setDebugInfo(prev => prev + ` | Details: ${err.details}`);
       }
-      if (error.hint) {
-        console.error('Error hint:', error.hint);
-        setDebugInfo(prev => prev + ` | Hint: ${error.hint}`);
+      if (err.hint) {
+        setDebugInfo(prev => prev + ` | Hint: ${err.hint}`);
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const generateQRCode = async (passId: string, studentId: string) => {
+  const generateQRCode = async (passId: string, studentId: string): Promise<string> => {
     try {
       const qrData = {
         passId,
@@ -185,7 +176,7 @@ export default function HODRequests() {
       const response = await fetch(qrCodeDataURL);
       const blob = await response.blob();
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('qr-codes')
         .upload(`${passId}.png`, blob, {
           cacheControl: '3600',
@@ -200,12 +191,11 @@ export default function HODRequests() {
 
       return urlData.publicUrl;
     } catch (error) {
-      console.error('Error generating QR code:', error);
-      throw error;
+      throw new Error(`QR code generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
-  const handleApprove = async (passId: string, studentId: string) => {
+  const handleApprove = async (passId: string, studentId: string): Promise<void> => {
     try {
       setProcessing(passId);
       
@@ -224,15 +214,15 @@ export default function HODRequests() {
 
       showNotification('Gate pass approved successfully! QR code generated.', 'success');
       fetchGatePasses();
-    } catch (error: any) {
-      console.error('Approval error:', error);
-      showNotification('Error approving gate pass: ' + error.message, 'error');
+    } catch (error: unknown) {
+      const err = error as SupabaseError;
+      showNotification('Error approving gate pass: ' + err.message, 'error');
     } finally {
       setProcessing(null);
     }
   };
 
-  const handleReject = async (passId: string) => {
+  const handleReject = async (passId: string): Promise<void> => {
     try {
       setProcessing(passId);
       
@@ -249,15 +239,15 @@ export default function HODRequests() {
 
       showNotification('Gate pass rejected.', 'warning');
       fetchGatePasses();
-    } catch (error: any) {
-      console.error('Rejection error:', error);
-      showNotification('Error rejecting gate pass: ' + error.message, 'error');
+    } catch (error: unknown) {
+      const err = error as SupabaseError;
+      showNotification('Error rejecting gate pass: ' + err.message, 'error');
     } finally {
       setProcessing(null);
     }
   };
 
-  const handleUndo = async (passId: string) => {
+  const handleUndo = async (passId: string): Promise<void> => {
     try {
       setProcessing(passId);
       
@@ -274,15 +264,15 @@ export default function HODRequests() {
 
       showNotification('Gate pass status reset to pending.', 'info');
       fetchGatePasses();
-    } catch (error: any) {
-      console.error('Undo error:', error);
-      showNotification('Error resetting gate pass: ' + error.message, 'error');
+    } catch (error: unknown) {
+      const err = error as SupabaseError;
+      showNotification('Error resetting gate pass: ' + err.message, 'error');
     } finally {
       setProcessing(null);
     }
   };
 
-  const showNotification = (message: string, type: 'success' | 'error' | 'warning' | 'info') => {
+  const showNotification = (message: string, type: 'success' | 'error' | 'warning' | 'info'): void => {
     alert(message);
   };
 
@@ -307,7 +297,7 @@ export default function HODRequests() {
     return configs[status as keyof typeof configs] || configs.pending;
   };
 
-  const downloadQRCode = async (qrUrl: string, studentName: string) => {
+  const downloadQRCode = async (qrUrl: string, studentName?: string): Promise<void> => {
     try {
       const response = await fetch(qrUrl);
       const blob = await response.blob();
@@ -315,13 +305,12 @@ export default function HODRequests() {
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = url;
-      a.download = `gate-pass-${studentName.replace(/\s+/g, '-').toLowerCase()}.png`;
+      a.download = `gate-pass-${(studentName || 'unknown').replace(/\s+/g, '-').toLowerCase()}.png`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      console.error('Error downloading QR code:', error);
       showNotification('Error downloading QR code', 'error');
     }
   };
@@ -388,8 +377,6 @@ export default function HODRequests() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
-
-          
           {/* Header Skeleton */}
           <div className="animate-pulse mb-8">
             <div className="h-8 bg-gray-300 rounded-lg w-1/3 mb-4"></div>
@@ -569,16 +556,6 @@ export default function HODRequests() {
                   >
                     Check Again
                   </button>
-                  <button
-                    onClick={() => {
-                      console.log('Current user ID:', userId);
-                      console.log('Expected HOD ID:', '3123631e-455c-49d8-9ab3-8ca24aaae20b');
-                      console.log('Gate passes:', gatePasses);
-                    }}
-                    className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors ml-2"
-                  >
-                    Debug Console
-                  </button>
                 </div>
               </motion.div>
             ) : (
@@ -665,7 +642,7 @@ export default function HODRequests() {
                                     <span className="text-sm font-medium">QR Code Generated</span>
                                   </div>
                                   <button
-                                    onClick={() => downloadQRCode(pass.qr_url!, student?.name)}
+                                    onClick={() => downloadQRCode(pass.qr_url, student?.name)}
                                     className="flex items-center space-x-1 text-green-700 hover:text-green-800 text-sm font-medium px-3 py-1 rounded-lg bg-green-100 hover:bg-green-200 transition-colors"
                                   >
                                     <FiDownload className="w-3 h-3" />
