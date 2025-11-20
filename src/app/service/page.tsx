@@ -18,6 +18,26 @@ const MoonIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   </svg>
 );
 
+// Feature Icons
+const SearchIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+  </svg>
+);
+
+const PassIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+  </svg>
+);
+
+const LocationIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
+);
+
 export default function Home() {
   const [darkMode, setDarkMode] = useState<boolean>(false);
   const router = useRouter();
@@ -53,13 +73,17 @@ export default function Home() {
     }
   };
 
-  // Handle card clicks
-  const handleKITClick = () => {
-    router.push('/service');
+  // Handle option clicks
+  const handleFindCabin = () => {
+    router.push('/kit165');
   };
 
-  const handleKITPClick = () => {
-    router.push('/kitp550');
+  const handleGetGatepass = () => {
+    router.push('/service/role');
+  };
+
+  const handleBothOptions = () => {
+    router.push('/both');
   };
 
   // Professional theme classes - exactly like in the provided code
@@ -138,72 +162,105 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Contenct */}
+      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Institute Information */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          {/* KIT Section */}
+        {/* Welcome Section */}
+        <div className="text-center mb-12">
+          <h1 className={`text-4xl font-bold ${themeClasses.text.primary} mb-4`}>
+            Welcome to Cabin Khojo
+          </h1>
+          <p className={`text-xl ${themeClasses.text.secondary} max-w-2xl mx-auto`}>
+            Your comprehensive staff management and campus navigation solution
+          </p>
+        </div>
+
+        {/* Three Options Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+          {/* Option 1: Find the Cabin */}
           <div 
-            onClick={handleKITClick}
-            className={`rounded-lg ${themeClasses.card} p-6 border-l-4 border-blue-600 transition-colors duration-300 cursor-pointer hover:shadow-lg transform hover:-translate-y-1 transition-all duration-200`}
+            onClick={handleFindCabin}
+            className={`rounded-lg ${themeClasses.card} p-8 border-l-4 border-blue-600 transition-colors duration-300 cursor-pointer hover:shadow-lg transform hover:-translate-y-2 transition-all duration-200 text-center`}
           >
-            <h1 className={`text-2xl font-bold ${themeClasses.text.primary} mb-4`}>
-              KANPUR INSTITUTE OF TECHNOLOGY
-            </h1>
-            <p className={`text-sm ${themeClasses.text.muted} mb-2`}>AICTE APPROVED | AKTU AFFILIATED</p>
-            
-            <div className={`rounded-lg p-4 ${
-              darkMode ? "bg-gray-700/50" : "bg-gray-50"
-            } transition-colors duration-300`}>
-              <h2 className={`text-lg font-semibold ${themeClasses.text.primary} mb-2`}>
-                Kanpur Institute of Technology
-              </h2>
-              <p className={`${themeClasses.text.secondary} mb-2`}>AKTU Code : 165</p>
-              <p className={`text-sm ${themeClasses.text.muted} mt-3`}>
-                Use <span className={`font-mono font-bold ${themeClasses.text.accent}`}>KIT168</span> as institute code to join college on mobile app.
-              </p>
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 ${
+              darkMode ? "bg-blue-900/30" : "bg-blue-50"
+            }`}>
+              <LocationIcon className={`w-8 h-8 ${themeClasses.text.accent}`} />
+            </div>
+            <h2 className={`text-2xl font-bold ${themeClasses.text.primary} mb-4`}>
+              Find the Cabin
+            </h2>
+            <p className={`${themeClasses.text.secondary} mb-6`}>
+              Locate faculty cabins and office locations across campus with our interactive map and search system.
+            </p>
+            <div className={`inline-flex items-center ${themeClasses.text.accent} font-semibold`}>
+              Get Directions
+              <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </div>
           </div>
 
-          {/* KITP Section */}
+          {/* Option 2: Get Your Gatepass */}
           <div 
-            onClick={handleKITPClick}
-            className={`rounded-lg ${themeClasses.card} p-6 border-l-4 border-green-600 transition-colors duration-300 cursor-pointer hover:shadow-lg transform hover:-translate-y-1 transition-all duration-200`}
+            onClick={handleGetGatepass}
+            className={`rounded-lg ${themeClasses.card} p-8 border-l-4 border-green-600 transition-colors duration-300 cursor-pointer hover:shadow-lg transform hover:-translate-y-2 transition-all duration-200 text-center`}
           >
-            <h1 className={`text-2xl font-bold ${themeClasses.text.primary} mb-4`}>
-              KANPUR INSTITUTE OF TECHNOLOGY AND PHARMACY
-            </h1>
-            <p className={`text-sm ${themeClasses.text.muted} mb-2`}>APPROVED | AKTU & BTE AFFILIATED</p>
-            
-            <div className={`rounded-lg p-4 ${
-              darkMode ? "bg-gray-700/50" : "bg-gray-50"
-            } transition-colors duration-300`}>
-              <h2 className={`text-lg font-semibold ${themeClasses.text.primary} mb-2`}>
-                Kanpur Institute of Technology And Pharmacy
-              </h2>
-              <p className={`${themeClasses.text.secondary} mb-2`}>AKTU Code : 550 & BTE Code : 3380</p>
-              <p className={`text-sm ${themeClasses.text.muted} mt-3`}>
-                Use <span className={`font-mono font-bold ${darkMode ? "text-green-400" : "text-green-600"}`}>KIT360</span> as institute code to join college on mobile app.
-              </p>
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 ${
+              darkMode ? "bg-green-900/30" : "bg-green-50"
+            }`}>
+              <PassIcon className={`w-8 h-8 ${darkMode ? "text-green-400" : "text-green-600"}`} />
+            </div>
+            <h2 className={`text-2xl font-bold ${themeClasses.text.primary} mb-4`}>
+              Get Your Gatepass
+            </h2>
+            <p className={`${themeClasses.text.secondary} mb-6`}>
+              Generate and manage your gate passes for campus access with our streamlined digital process.
+            </p>
+            <div className={`inline-flex items-center ${darkMode ? "text-green-400" : "text-green-600"} font-semibold`}>
+              Generate Pass
+              <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+
+          {/* Option 3: Both Options */}
+          <div 
+            onClick={handleBothOptions}
+            className={`rounded-lg ${themeClasses.card} p-8 border-l-4 border-purple-600 transition-colors duration-300 cursor-pointer hover:shadow-lg transform hover:-translate-y-2 transition-all duration-200 text-center`}
+          >
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 ${
+              darkMode ? "bg-purple-900/30" : "bg-purple-50"
+            }`}>
+              <SearchIcon className={`w-8 h-8 ${darkMode ? "text-purple-400" : "text-purple-600"}`} />
+            </div>
+            <h2 className={`text-2xl font-bold ${themeClasses.text.primary} mb-4`}>
+              Both Services
+            </h2>
+            <p className={`${themeClasses.text.secondary} mb-6`}>
+              Access both cabin location services and gatepass management in one comprehensive dashboard.
+            </p>
+            <div className={`inline-flex items-center ${darkMode ? "text-purple-400" : "text-purple-600"} font-semibold`}>
+              Access All
+              <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </div>
           </div>
         </div>
 
-        {/* Additional Content Sections */}
+        {/* Additional Information */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           {/* Feature Cards */}
           <div className={`rounded-lg ${themeClasses.card} p-6 transition-colors duration-300`}>
             <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
               darkMode ? "bg-blue-900/30" : "bg-blue-50"
             } mb-4`}>
-              <svg className={`w-6 h-6 ${themeClasses.text.accent}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+              <LocationIcon className={`w-6 h-6 ${themeClasses.text.accent}`} />
             </div>
             <h3 className={`text-lg font-semibold ${themeClasses.text.primary} mb-2`}>Easy Location</h3>
             <p className={`text-sm ${themeClasses.text.secondary}`}>
-              Quickly find faculty cabins and office locations across campus.
+              Quickly find faculty cabins and office locations across campus with detailed directions.
             </p>
           </div>
 
@@ -211,13 +268,11 @@ export default function Home() {
             <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
               darkMode ? "bg-green-900/30" : "bg-green-50"
             } mb-4`}>
-              <svg className={`w-6 h-6 ${darkMode ? "text-green-400" : "text-green-600"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
+              <PassIcon className={`w-6 h-6 ${darkMode ? "text-green-400" : "text-green-600"}`} />
             </div>
-            <h3 className={`text-lg font-semibold ${themeClasses.text.primary} mb-2`}>Verified Data</h3>
+            <h3 className={`text-lg font-semibold ${themeClasses.text.primary} mb-2`}>Digital Gatepass</h3>
             <p className={`text-sm ${themeClasses.text.secondary}`}>
-              Accurate and up-to-date information verified by administration.
+              Generate and manage gate passes digitally with instant verification and approval.
             </p>
           </div>
 
@@ -225,13 +280,11 @@ export default function Home() {
             <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
               darkMode ? "bg-purple-900/30" : "bg-purple-50"
             } mb-4`}>
-              <svg className={`w-6 h-6 ${darkMode ? "text-purple-400" : "text-purple-600"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+              <SearchIcon className={`w-6 h-6 ${darkMode ? "text-purple-400" : "text-purple-600"}`} />
             </div>
-            <h3 className={`text-lg font-semibold ${themeClasses.text.primary} mb-2`}>Quick Search</h3>
+            <h3 className={`text-lg font-semibold ${themeClasses.text.primary} mb-2`}>Quick Access</h3>
             <p className={`text-sm ${themeClasses.text.secondary}`}>
-              Fast and intuitive search functionality for all faculty members.
+              Fast and intuitive access to all campus services through a unified platform.
             </p>
           </div>
         </div>
@@ -250,7 +303,7 @@ export default function Home() {
             </div>
             <div>
               <p className={`text-sm ${themeClasses.text.muted}`}>
-                Institutional Staff Management
+                Institutional Staff Management & Gatepass System
               </p>
             </div>
           </div>

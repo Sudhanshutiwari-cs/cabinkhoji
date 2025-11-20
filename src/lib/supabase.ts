@@ -1,11 +1,11 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 
-// Environment variable types (ensures they are not undefined)
-const supabaseUrl: string = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-const supabaseAnonKey: string = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("Missing Supabase environment variables!");
-}
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+export const getServiceRoleSupabase = () => {
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  return createClient(supabaseUrl, serviceRoleKey);
+};
