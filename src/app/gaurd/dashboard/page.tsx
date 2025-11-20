@@ -148,20 +148,21 @@ export default function GuardScanner() {
     isScanningRef.current = true;
 
     // Use decodeFromVideoDevice for continuous scanning
-    codeReaderRef.current.decodeFromVideoDevice(
-      null,
-      videoRef.current,
-      (result, error) => {
-        if (result && isScanningRef.current) {
-          processQRCode(result.getText());
-        }
-        
-        // Don't log normal "not found" errors
-        if (error && !error.message?.includes('NotFoundException') && isScanningRef.current) {
-          console.debug('Scan error:', error);
-        }
-      }
-    );
+    // Use decodeFromVideoDevice for continuous scanning
+codeReaderRef.current.decodeFromVideoDevice(
+  undefined, // Changed from null to undefined
+  videoRef.current,
+  (result, error) => {
+    if (result && isScanningRef.current) {
+      processQRCode(result.getText());
+    }
+    
+    // Don't log normal "not found" errors
+    if (error && !error.message?.includes('NotFoundException') && isScanningRef.current) {
+      console.debug('Scan error:', error);
+    }
+  }
+);
   };
 
   const processQRCode = async (data: string) => {
