@@ -7,7 +7,8 @@ import {
   EyeIcon,
   PlusIcon,
   QrCodeIcon,
-  XCircleIcon 
+  XCircleIcon,
+  ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -36,6 +37,7 @@ export default function StudentDashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [logoutLoading, setLogoutLoading] = useState(false);
   const router = useRouter();
 
   const fetchGatePasses = useCallback(async (studentId: string) => {
@@ -99,6 +101,30 @@ export default function StudentDashboard() {
       router.replace('/login');
     }
   }, [router, fetchGatePasses]);
+
+  const handleLogout = async () => {
+    try {
+      setLogoutLoading(true);
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) throw error;
+      
+      // Clear local state
+      setUser(null);
+      setProfile(null);
+      setGatePasses([]);
+      
+      // Redirect to login page
+      router.replace('/login');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      // eslint-disable-next-line no-console
+      console.error('Error logging out:', errorMessage);
+      alert('Failed to logout. Please try again.');
+    } finally {
+      setLogoutLoading(false);
+    }
+  };
 
   useEffect(() => {
     checkUserAndFetchData();
@@ -188,14 +214,29 @@ export default function StudentDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Welcome Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            {getGreeting()}, {getUserName()}! 👋
-          </h1>
-          <p className="text-lg text-gray-600">
-            Welcome to your gate pass dashboard. Here's an overview of your requests.
-          </p>
+        {/* Welcome Header with Logout */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <div className="flex-1">
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
+              {getGreeting()}, {getUserName()}! 👋
+            </h1>
+            <p className="text-base sm:text-lg text-gray-600">
+              Welcome to your gate pass dashboard. Here's an overview of your requests.
+            </p>
+          </div>
+          <button
+            onClick={handleLogout}
+            disabled={logoutLoading}
+            className="inline-flex items-center justify-center gap-2 bg-red-600 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg hover:bg-red-700 transition-colors shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+          >
+            <ArrowRightOnRectangleIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">
+              {logoutLoading ? 'Logging out...' : 'Logout'}
+            </span>
+            <span className="sm:hidden">
+              {logoutLoading ? '...' : 'Logout'}
+            </span>
+          </button>
         </div>
 
         {/* Header with Actions */}
@@ -206,7 +247,7 @@ export default function StudentDashboard() {
           </div>
           <Link
             href="/student/create-pass"
-            className="inline-flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 transition-colors shadow-lg hover:shadow-xl mt-4 sm:mt-0"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 transition-colors shadow-lg hover:shadow-xl mt-4 sm:mt-0"
           >
             <PlusIcon className="w-5 h-5" />
             New Gate Pass
