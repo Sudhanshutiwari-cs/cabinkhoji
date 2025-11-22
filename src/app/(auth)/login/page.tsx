@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 
@@ -8,7 +8,39 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const router = useRouter();
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          // User is logged in, redirect to dashboard
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+
+          if (profile) {
+            router.push(`/${profile.role}/dashboard`);
+          } else {
+            // If no profile found, redirect to a default page or show error
+            router.push('/');
+          }
+        }
+      } catch (error) {
+        console.error('Error checking authentication:', error);
+      } finally {
+        setCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,27 +63,33 @@ export default function Login() {
 
         if (profile) {
           router.push(`/${profile.role}/dashboard`);
+        } else {
+          // Handle case where profile doesn't exist
+          alert('Profile not found. Please contact support.');
         }
       }
     } catch (error) {
-      // Option 1: Type guard to check if it's an Error object
       if (error instanceof Error) {
         alert(error.message);
       } else {
-        // Option 2: Handle unknown error type
         alert('An unexpected error occurred');
       }
-      
-      // Option 3: More specific error handling for Supabase errors
-      // if (typeof error === 'object' && error !== null && 'message' in error) {
-      //   alert((error as { message: string }).message);
-      // } else {
-      //   alert('An unexpected error occurred');
-      // }
     } finally {
       setLoading(false);
     }
   };
+
+  // Show loading state while checking authentication
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
