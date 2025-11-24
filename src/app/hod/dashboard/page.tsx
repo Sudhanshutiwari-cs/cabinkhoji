@@ -601,18 +601,7 @@ const handleDemoteStudent = async (studentId: string, currentYear: number): Prom
     ? students 
     : students.filter(student => student.year === selectedYear);
 
-  const DebugPanel = () => (
-    <div className="bg-gray-100 p-4 rounded-lg mb-4">
-      <h3 className="font-semibold mb-2">Debug Information:</h3>
-      <p className="text-sm"><strong>User ID:</strong> {userId}</p>
-      <p className="text-sm"><strong>User Role:</strong> {userRole}</p>
-      <p className="text-sm"><strong>Department:</strong> {userDepartment}</p>
-      <p className="text-sm"><strong>Gate Passes Count:</strong> {gatePasses.length}</p>
-      <p className="text-sm"><strong>Students Count:</strong> {students.length}</p>
-      <p className="text-sm"><strong>View Mode:</strong> {viewMode}</p>
-      <p className="text-sm"><strong>Debug Info:</strong> {debugInfo}</p>
-    </div>
-  );
+
 
   if (loading && !userRole && !unauthorized) {
     return (
@@ -693,7 +682,7 @@ const handleDemoteStudent = async (studentId: string, currentYear: number): Prom
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         
-        <DebugPanel />
+        
 
         <motion.div
           initial={{ opacity: 0, y: -20 }}
