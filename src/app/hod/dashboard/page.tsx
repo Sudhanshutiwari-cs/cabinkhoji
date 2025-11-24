@@ -21,7 +21,9 @@ import {
   FiAward,
   FiLogOut,
   FiUsers,
-  FiList
+  FiList,
+  FiArrowUp,
+  FiArrowDown
 } from 'react-icons/fi';
 import { useRouter } from 'next/navigation';
 
@@ -89,6 +91,7 @@ export default function HODRequests() {
   const [viewMode, setViewMode] = useState<ViewMode>('gatepasses');
   const [selectedYear, setSelectedYear] = useState<number | 'all'>('all');
   const [studentsLoading, setStudentsLoading] = useState(false);
+  const [promoteDemoteLoading, setPromoteDemoteLoading] = useState<string | null>(null);
 
   useEffect(() => {
     checkUserRoleAndDepartment();
@@ -271,42 +274,137 @@ export default function HODRequests() {
       console.error('Alternative approach error:', error);
     }
   };
+const fetchStudents = async (): Promise<void> => {
+  try {
+    setStudentsLoading(true);
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('department', userDepartment)
+      .eq('role', 'student')
+      .order('year', { ascending: false })
+      .order('roll', { ascending: true });
 
-  const fetchStudents = async (): Promise<void> => {
-    try {
-      setStudentsLoading(true);
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('department', userDepartment)
-        .eq('role', 'student')
-        .order('year', { ascending: false })
-        .order('roll', { ascending: true });
-
-      if (error) {
-        console.error('Students query error:', error);
-        setDebugInfo(prev => prev + ` | Students query error: ${error.message}`);
-        throw error;
-      }
-
-      console.log('Department students:', data);
-      setStudents(data || []);
-      setDebugInfo(prev => prev + ` | Found ${data?.length} students`);
-      
-    } catch (error: unknown) {
-      const err = error as SupabaseError;
-      console.error('Students fetch error:', error);
-      if (err.details) {
-        setDebugInfo(prev => prev + ` | Details: ${err.details}`);
-      }
-      if (err.hint) {
-        setDebugInfo(prev => prev + ` | Hint: ${err.hint}`);
-      }
-    } finally {
-      setStudentsLoading(false);
+    if (error) {
+      console.error('Students query error:', error);
+      setDebugInfo(prev => prev + ` | Students query error: ${error.message}`);
+      throw error;
     }
-  };
+
+    // Convert year from string to number for local state
+    const studentsWithNumberYear = (data || []).map(student => ({
+      ...student,
+      year: parseInt(student.year || '1', 10) // Convert string to number, default to 1 if null
+    }));
+
+    console.log('Department students:', studentsWithNumberYear);
+    setStudents(studentsWithNumberYear);
+    setDebugInfo(prev => prev + ` | Found ${data?.length} students`);
+    
+  } catch (error: unknown) {
+    const err = error as SupabaseError;
+    console.error('Students fetch error:', error);
+    if (err.details) {
+      setDebugInfo(prev => prev + ` | Details: ${err.details}`);
+    }
+    if (err.hint) {
+      setDebugInfo(prev => prev + ` | Hint: ${err.hint}`);
+    }
+  } finally {
+    setStudentsLoading(false);
+  }
+};
+
+  const handlePromoteStudent = async (studentId: string, currentYear: number): Promise<void> => {
+  try {
+    setPromoteDemoteLoading(studentId);
+    
+    console.log('Promoting student:', studentId, 'Current year:', currentYear, 'Type:', typeof currentYear);
+    
+    // Check if student is already at maximum year
+    if (currentYear >= 4) {
+      showNotification('Student is already in the final year (Year 4) and cannot be promoted further.', 'warning');
+      return;
+    }
+    
+    const newYear = currentYear + 1;
+    
+    console.log('New year will be:', newYear);
+    
+    // Convert to string since the database expects text
+    const newYearString = String(newYear);
+    
+    const { error } = await supabase
+      .from('profiles')
+      .update({ year: newYearString })
+      .eq('id', studentId);
+
+    if (error) throw error;
+
+    showNotification(`Student promoted to Year ${newYear} successfully!`, 'success');
+    
+    // Update local state - keep as number for local state
+    setStudents(prev => prev.map(student => 
+      student.id === studentId ? { ...student, year: newYear } : student
+    ));
+    
+  } catch (error: unknown) {
+    const err = error as SupabaseError;
+    
+    // Handle specific constraint violation
+    if (err.message.includes('profiles_year_check')) {
+      showNotification('Cannot promote student: Year value must be between 1 and 4.', 'error');
+    } else {
+      showNotification('Error promoting student: ' + err.message, 'error');
+    }
+  } finally {
+    setPromoteDemoteLoading(null);
+  }
+};
+
+const handleDemoteStudent = async (studentId: string, currentYear: number): Promise<void> => {
+  try {
+    setPromoteDemoteLoading(studentId);
+    
+    // Check if student is already at minimum year
+    if (currentYear <= 1) {
+      showNotification('Student is already in Year 1 and cannot be demoted further.', 'warning');
+      return;
+    }
+    
+    const newYear = currentYear - 1;
+    
+    // Convert to string since the database expects text
+    const newYearString = String(newYear);
+    
+    const { error } = await supabase
+      .from('profiles')
+      .update({ year: newYearString })
+      .eq('id', studentId);
+
+    if (error) throw error;
+
+    showNotification(`Student demoted to Year ${newYear} successfully!`, 'warning');
+    
+    // Update local state - keep as number for local state
+    setStudents(prev => prev.map(student => 
+      student.id === studentId ? { ...student, year: newYear } : student
+    ));
+    
+  } catch (error: unknown) {
+    const err = error as SupabaseError;
+    
+    // Handle specific constraint violation
+    if (err.message.includes('profiles_year_check')) {
+      showNotification('Cannot demote student: Year value must be between 1 and 4.', 'error');
+    } else {
+      showNotification('Error demoting student: ' + err.message, 'error');
+    }
+  } finally {
+    setPromoteDemoteLoading(null);
+  }
+};
 
   const handleLogout = async (): Promise<void> => {
     try {
@@ -1087,9 +1185,46 @@ export default function HODRequests() {
                             </div>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="text-sm text-gray-500">
-                            Joined: {new Date(student.created_at).toLocaleDateString()}
+                        <div className="flex items-center space-x-3">
+                          <div className="text-right mr-4">
+                            <div className="text-sm text-gray-500">
+                              Joined: {new Date(student.created_at).toLocaleDateString()}
+                            </div>
+                            <div className="text-lg font-bold text-blue-600">
+                              Year {student.year}
+                            </div>
+                          </div>
+                          <div className="flex flex-col space-y-2">
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => handlePromoteStudent(student.id, student.year)}
+                              disabled={promoteDemoteLoading === student.id}
+                              className="flex items-center space-x-2 bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors"
+                              title="Promote to next year"
+                            >
+                              {promoteDemoteLoading === student.id ? (
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <FiArrowUp className="w-4 h-4" />
+                              )}
+                              <span>Promote</span>
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => handleDemoteStudent(student.id, student.year)}
+                              disabled={promoteDemoteLoading === student.id || student.year <= 1}
+                              className="flex items-center space-x-2 bg-orange-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-orange-700 disabled:opacity-50 transition-colors"
+                              title="Demote to previous year"
+                            >
+                              {promoteDemoteLoading === student.id ? (
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <FiArrowDown className="w-4 h-4" />
+                              )}
+                              <span>Demote</span>
+                            </motion.button>
                           </div>
                         </div>
                       </div>
