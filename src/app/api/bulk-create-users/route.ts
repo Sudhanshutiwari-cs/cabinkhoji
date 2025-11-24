@@ -25,6 +25,7 @@ export async function POST(req: Request) {
           name: s.name,
           roll: s.roll,
           department: s.department,
+          year: 1, // Default year set to 2
           role: "student",
         },
       });

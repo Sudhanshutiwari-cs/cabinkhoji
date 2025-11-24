@@ -1,64 +1,90 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase'; // adjust path if needed
+import { useRouter } from 'next/navigation';
 
-export default function PhoneOTP() {
-  const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
-  const [showOtp, setShowOtp] = useState(false);
+export default function TestGoogleLogin() {
+  const [loading, setLoading] = useState(false);
+  const [session, setSession] = useState(null);
+  const router = useRouter();
 
-  const sendOtp = async () => {
-    const { error } = await supabase.auth.signInWithOtp({
-      phone: phone,
+  useEffect(() => {
+    const getSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      setSession(data?.session || null);
+    };
+
+    getSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session);
+      }
+    );
+
+    return () => authListener.subscription.unsubscribe();
+  }, []);
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: 'https://fasuynajpxrybermitpy.supabase.co/auth/v1/callback'
+,
+      },
     });
 
-    if (error) alert(error.message);
-    else setShowOtp(true);
+    if (error) {
+      console.error(error);
+      setLoading(false);
+    }
   };
 
-  const verifyOtp = async () => {
-    const { data, error } = await supabase.auth.verifyOtp({
-      phone,
-      token: otp,
-      type: "sms",
-    });
-
-    if (error) alert(error.message);
-    else alert("Logged in successfully!");
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
   };
 
   return (
-    <div className="p-4 space-y-4">
+    <div style={{ padding: 40 }}>
+      <h1>Google OAuth Test</h1>
 
-      {!showOtp && (
+      {!session ? (
+        <button
+          onClick={handleGoogleLogin}
+          style={{
+            padding: '12px 20px',
+            background: '#4285F4',
+            color: 'white',
+            borderRadius: 8,
+            border: 0,
+            cursor: 'pointer',
+            marginTop: 20,
+          }}
+        >
+          {loading ? 'Redirecting...' : 'Login with Google'}
+        </button>
+      ) : (
         <>
-          <input
-            className="border p-2 w-full"
-            placeholder="Enter phone +91..."
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
-          <button onClick={sendOtp} className="bg-blue-600 text-white px-4 py-2">
-            Send OTP
+          <p>Logged in as:</p>
+          <pre>{JSON.stringify(session.user, null, 2)}</pre>
+          <button
+            onClick={handleLogout}
+            style={{
+              padding: '12px 20px',
+              background: '#e53935',
+              color: 'white',
+              borderRadius: 8,
+              border: 0,
+              cursor: 'pointer',
+              marginTop: 20,
+            }}
+          >
+            Logout
           </button>
         </>
       )}
-
-      {showOtp && (
-        <>
-          <input
-            className="border p-2 w-full"
-            placeholder="Enter OTP"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-          />
-          <button onClick={verifyOtp} className="bg-green-600 text-white px-4 py-2">
-            Verify OTP
-          </button>
-        </>
-      )}
-
     </div>
   );
 }
