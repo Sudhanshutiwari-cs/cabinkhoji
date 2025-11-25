@@ -1,14 +1,16 @@
-import ResetPasswordClient from "@/app/reset-password/ResetPasswordClient";
 import { Suspense } from "react";
+import ResetPasswordClient from "./ResetPasswordClient";
 
 interface PageProps {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default function ResetPasswordPage({ searchParams }: PageProps) {
-  const accessToken = Array.isArray(searchParams.access_token) 
-    ? searchParams.access_token[0] 
-    : searchParams.access_token;
+export default async function ResetPasswordPage({ searchParams }: PageProps) {
+  // Await the searchParams Promise
+  const params = await searchParams;
+  const accessToken = Array.isArray(params.access_token) 
+    ? params.access_token[0] 
+    : params.access_token;
 
   return (
     <Suspense fallback={<LoadingFallback />}>
