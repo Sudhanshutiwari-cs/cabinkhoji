@@ -42,10 +42,11 @@ export default function AdminPanel() {
     const adminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
     
     // Fallback to defaults if env vars are not set (for development)
-    return {
-      username: adminUsername || "admin",
-      password: adminPassword || "admin123"
-    };
+   return {
+  username: adminUsername,
+  password: adminPassword
+};
+
   };
 
   // Handle login
