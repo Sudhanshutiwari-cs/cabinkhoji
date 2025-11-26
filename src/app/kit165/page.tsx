@@ -316,10 +316,7 @@ export default function Home() {
                             <span className={themeClasses.text.secondary}>{teacher.department}</span>
                           </div>
                           <div className="w-px h-4 bg-gray-300 dark:bg-gray-600"></div>
-                          <div className="flex items-center space-x-1">
-                            <BuildingIcon className={`w-4 h-4 ${themeClasses.text.muted}`} />
-                            <span className={themeClasses.text.secondary}>Main Building</span>
-                          </div>
+                         
                         </div>
                       </div>
                     </div>
@@ -345,10 +342,7 @@ export default function Home() {
                           </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className={`text-xs ${themeClasses.text.muted} mb-1`}>Floor</p>
-                        <p className={`text-sm font-medium ${themeClasses.text.primary}`}>2nd Floor</p>
-                      </div>
+                      
                     </div>
                   </div>
                 </div>
