@@ -68,9 +68,9 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon: Icon, title, descriptio
     </div>
     <h3 className="text-xl font-bold text-gray-800 mb-2">{title}</h3>
     <p className="text-gray-500 text-sm leading-relaxed">{description}</p>
-    <div className="mt-4 flex items-center text-blue-600 font-medium text-sm opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-[-10px] group-hover:translate-x-0">
-      Access now <ChevronRight className="w-4 h-4 ml-1" />
-    </div>
+   <Link href="/acode" className="mt-4 flex items-center text-blue-600 font-medium text-sm opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-[-10px] group-hover:translate-x-0">
+  Access now <ChevronRight className="w-4 h-4 ml-1" />
+</Link>
   </motion.div>
 );
 
